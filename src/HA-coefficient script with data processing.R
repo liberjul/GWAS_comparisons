@@ -1,7 +1,7 @@
 library(ggplot2)
 library(data.table)
 library(p.exact)
-per_chrom <- function(x){
+per_chrom <- function(x){ # function to find per chromosome position
   if (x <= 34964571){
     as.numeric(x)
   }
@@ -19,15 +19,15 @@ per_chrom <- function(x){
   }
 }
 
-data(arab)
-pheno <- phdata(arab)
-geno <- gtdata(arab)
-map <- geno@map
-chrom <- geno@chromosome
-snp_names <- geno@snpnames
-per_chrom_map <- lapply(map, per_chrom) 
-#snp_geno_df <- as.genotype.snp.data(geno)
-write.csv(pheno, file="Arabidopsis_pheno.csv")
+data(arab) # load data
+pheno <- phdata(arab) # phenotype data
+geno <- gtdata(arab) # genotype data
+map <- geno@map # map positions
+chrom <- geno@chromosome # chromosome positions (1-5)
+snp_names <- geno@snpnames # snp names by index
+per_chrom_map <- lapply(map, per_chrom) # map position by chromosome
+#snp_geno_df <- as.genotype.snp.data(geno) # convert genotype data to dataframe
+write.csv(pheno, file="Arabidopsis_pheno.csv") # save data files
 write.csv(snp_geno_df, file="Arabidopsis_geno.txt")
 sum_vec <- 0
 ptm1 <- proc.time()

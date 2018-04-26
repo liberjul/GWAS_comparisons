@@ -3,41 +3,44 @@ library(p.exact)
 library(mrMLM)
 library(data.table)
 data(arab)
-pheno <- phdata(arab)
-geno <- gtdata(arab)
-gkin <- ibs(arab, weight="freq")
-snp_geno_df <- as.genotype.snp.data(geno)
-write.csv(pheno, file="Arabidopsis_pheno.csv")
+pheno <- phdata(arab) # extract phenotypic data
+geno <- gtdata(arab) # extract genotypic data
+gkin <- ibs(arab, weight="freq") #calculate kinship matrix
+snp_geno_df <- as.genotype.snp.data(geno) # create data frame from snp data
+# save data to files
+write.csv(pheno, file="Arabidopsis_pheno.csv") 
 write.csv(snp_geno_df, file="Arabidopsis_geno.txt")
 write.csv(gkin, file="Arabidopsis_kin.txt")
-snp_geno_df <- fread("Arabidopsis_geno.txt", sep=",")
-snp_info <- cbind(arab@gtdata@snpnames, arab@gtdata@chromosome, arab@gtdata@map)
-snp_info <- cbind(snp_info, )
-snp_info <- rbind(snp_info, rep("1/1", dim(snp_info)[2]))
-hapName <- c("rs#","chrom","pos","genotype for code 1")
-snp_info <- cbind(hapName, snp_info)
-colnames(snp_info) <- colnames(snp_geno_df)
-snp_geno_df <- rbind(snp_info, snp_geno_df[2:199])
-t_snp_geno_df <- transpose(snp_geno_df)
-rownames(t_snp_geno_df) <- colnames(snp_geno_df)
+# format data
+snp_geno_df <- fread("Arabidopsis_geno.txt", sep=",") # read in data
+snp_info <- cbind(arab@gtdata@snpnames, arab@gtdata@chromosome, arab@gtdata@map) #construct snp data
+snp_info <- rbind(snp_info, rep("1/1", dim(snp_info)[2])) # add genotype code, not really necessary
+hapName <- c("rs#","chrom","pos","genotype for code 1") # store names
+snp_info <- cbind(hapName, snp_info) # complete snp info
+colnames(snp_info) <- colnames(snp_geno_df) # apply names
+snp_geno_df <- rbind(snp_info, snp_geno_df[2:199]) # attach to snp data
+t_snp_geno_df <- transpose(snp_geno_df) # create transposed version
+rownames(t_snp_geno_df) <- colnames(snp_geno_df) # switch row and col names
 colnames(t_snp_geno_df) <- rownames(snp_geno_df)
-write.csv(t_snp_geno_df, file="Arabidopsis_geno_t.txt")
-genRaw <- fread("Arabidopsis_geno_t.txt", sep=",")
-pheRaw <- fread("Arabidopsis_pheno.txt", sep=",")
-convert <- function(x) as.numeric(factor(x, levels = names(sort(-table(x)))))
-gen_only <- genRaw[2:dim(genRaw)[1],5:dim(genRaw)[2]]
-num_geno <- as.data.frame(lapply(gen_only, FUN = convert))
-num_geno_t <- t(num_geno)
-num_geno_t <- as.data.frame(num_geno_t)
-pca1 <- prcomp(num_geno_t)
-ps_uncut <- pca1$x[,1:10]
-pheno_col <- as.data.frame(pheno$X3_SD)
-y_uncut <- pheno_col
+write.csv(t_snp_geno_df, file="Arabidopsis_geno_t.txt") # write to file
+genRaw <- fread("Arabidopsis_geno_t.txt", sep=",") # read in gen data for analysis
+pheRaw <- fread("Arabidopsis_pheno.txt", sep=",") # read in phe data for analysis
+convert <- function(x) as.numeric(factor(x, levels = names(sort(-table(x))))) #function to make data numeric
+gen_only <- genRaw[2:dim(genRaw)[1],5:dim(genRaw)[2]] # retrieve only genotypc data
+num_geno <- as.data.frame(lapply(gen_only, FUN = convert)) # make data numerical
+num_geno_t <- t(num_geno) # transpose numerical data
+num_geno_t <- as.data.frame(num_geno_t) # recreate data.frame from matrix
+pca1 <- prcomp(num_geno_t) # conduct pca for population structure
+ps_uncut <- pca1$x[,1:10] # use only first 10 components
+pheno_col <- as.data.frame(pheno$X3_SD) # define phenotype input
+y_uncut <- pheno_col # save as uncut data
+# remove rows with NA from all inputs
 y<-as.data.frame(y_uncut[as.vector(!is.na(y_uncut)),])
 ps<- ps_uncut[as.vector(!is.na(y_uncut)),]
 fin_geno <- cbind(genRaw[2:dim(genRaw)[1],1:2], num_geno[,as.vector(!is.na(y_uncut))])
-geno_mat <- data.matrix(fin_geno)
-per_chrom <- function(x){
+
+geno_mat <- data.matrix(fin_geno) #convert to data matrix
+per_chrom <- function(x){ # convert map to per chromosome positon
   if (x <= 34964571){
     as.numeric(x)
   }
@@ -54,8 +57,7 @@ per_chrom <- function(x){
     as.numeric(x - 103363881)
   }
 }
-isis_out <- ISIS(geno_mat, y, outATCG=NULL, genRaw, gkin, ps, 0.05, 3.3, 1, 2)
-plar_out <- pLARmEB(geno_mat, y, outATCG=NULL, genRaw, gkin, ps, 3.3, 10, 1, Bootstrap=FALSE, 2)
+#isis_out <- ISIS(geno_mat, y, outATCG=NULL, genRaw, gkin, ps, 0.05, 3.3, 1, 2)
 
 gen <- geno_mat
 phe <- y
