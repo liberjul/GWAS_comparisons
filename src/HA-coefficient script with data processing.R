@@ -1,7 +1,3 @@
-#Supplementary R scripts
-###################
-# Figure 3a
-###################
 library(ggplot2)
 library(data.table)
 library(p.exact)
@@ -40,7 +36,7 @@ convert <- function(x) as.numeric(factor(x, levels = names(sort(-table(x)))))
 dat <- fread("Arabidopsis_geno.txt", sep=",")
 dat <- as.data.frame(lapply(dat, FUN = convert))
 res <- 0
-pheno <- fread("Arabidopsis_pheno.txt", sep=",")[["X34_.i.avrRpt2..i."]] #dat[,length(dat[1,])]
+pheno <- fread("Arabidopsis_pheno.txt", sep=",")[["X57_FT_Field"]] #dat[,length(dat[1,])]
 for (i in 2:(length(dat[1,]))){
 su <- 0
 geno <- dat[,i]
@@ -83,15 +79,14 @@ ptm2 <- proc.time()
 cat(ptm2-ptm1)
 
 HA_data <- as.data.frame(cbind(snp_names, chrom, map, per_chrom_map, res))
+plot(map, res, col=chrom, xlab="Map Position", ylab="HA-coefficient", main="HA Coefficient GWAS of Phenotype FT_Field")
 
 colnames(HA_data) <- c("ID", "Chromosome", "Map","Per_chrom Map", "Res")
-write.csv(HA_data, "HA_res.csv")
-HA_data <- fread("HA_res.csv", sep=",")
+write.csv(HA_data, "HA_res_SD.csv")
+HA_data <- fread("HA_res_SD.csv", sep=",")
 HA_data <- as.data.frame(lapply(HA_data, FUN = as.numeric))
 HA_no_zeros <- HA_data[(HA_data$Res > 0), ]
-#p <- qplot(ID, Res, data=HA_no_zeros, color=Chromosome, size=0.1) 
-plot(HA_no_zeros$Map, HA_no_zeros$Res, col=HA_no_zeros$Chromosome, xlab="Map Position", ylab="HA-coefficient", main="HA Coefficient GWAS of Phenotype LC_Duration_GH")
-#p <- ggplot(aes(x=ID, y=Res, data=HA_data, color=Chromosome))
+
 ord_snps <- order(HA_data$Res, decreasing=TRUE)
 top_hit_indexes <- ord_snps[1:10]
 top_hits <- as.data.frame(cbind(as.numeric(as.matrix(HA_data$Chromosome[top_hit_indexes],ncol=1)), as.numeric(as.matrix(per_chrom_map[top_hit_indexes], ncol=1))))
@@ -102,3 +97,4 @@ for (i in 1:10){
   top_hits$search_string[i] <- paste0("Chr", top_hits$Chrom[i], ":", round(top_hits$Pos[i]) - range, "..", round(top_hits$Pos[i]) + range)
 }
 top_hits
+write.csv(top_hits, "Top_genes_HA_coed_0W_GH_FT.csv")

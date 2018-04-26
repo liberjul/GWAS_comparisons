@@ -6,7 +6,6 @@ data(arab)
 pheno <- phdata(arab)
 geno <- gtdata(arab)
 gkin <- ibs(arab, weight="freq")
-eg <- egscore(X47_0W_GH_FT, data=arab, kinship.matrix=gkin)
 snp_geno_df <- as.genotype.snp.data(geno)
 write.csv(pheno, file="Arabidopsis_pheno.csv")
 write.csv(snp_geno_df, file="Arabidopsis_geno.txt")
@@ -32,7 +31,7 @@ num_geno_t <- t(num_geno)
 num_geno_t <- as.data.frame(num_geno_t)
 pca1 <- prcomp(num_geno_t)
 ps_uncut <- pca1$x[,1:10]
-pheno_col <- as.data.frame(pheno$X59_FT_GH)
+pheno_col <- as.data.frame(pheno$X3_SD)
 y_uncut <- pheno_col
 y<-as.data.frame(y_uncut[as.vector(!is.na(y_uncut)),])
 ps<- ps_uncut[as.vector(!is.na(y_uncut)),]
@@ -55,9 +54,6 @@ per_chrom <- function(x){
     as.numeric(x - 103363881)
   }
 }
-
-
-mrMLM(fileGen="Arabidopsis_geno_t.txt",filePhe="Arabidopsis_pheno.txt",fileKin="Arabidopsis_kin.txt",filePS="Arabidopsis_struct.txt",Genformat="Num",method="ISIS",trait=1, CriLOD=3.3,SelectVariable=50,Bootstrap=FALSE,DrawPlot=TRUE,Plotformat="*.jpeg",Resolution="High")
 isis_out <- ISIS(geno_mat, y, outATCG=NULL, genRaw, gkin, ps, 0.05, 3.3, 1, 2)
 plar_out <- pLARmEB(geno_mat, y, outATCG=NULL, genRaw, gkin, ps, 3.3, 10, 1, Bootstrap=FALSE, 2)
 
@@ -443,54 +439,61 @@ if((is.null(gen)==FALSE)&&(is.null(y)==FALSE)&&((ncol(gen)==(nrow(y)+2)))&&(svpa
               }
             }
             
-            wan<-cbind(marker,wan,maf,snp,vees,pees)
-            tempwan <- wan
-            lodscore1 <- as.numeric(tempwan[,5])
-            log10P <- as.matrix(round(-log10(1-pchisq(lodscore1*4.605,1)),4))
+            #wan<-cbind(marker,wan,maf,snp,vees,pees)
+            #tempwan <- wan
+            #lodscore1 <- as.numeric(tempwan[,5])
+            #log10P <- as.matrix(round(-log10(1-pchisq(lodscore1*4.605,1)),4))
             
-            if(nrow(tempwan)>1){
-              tempwan1 <- cbind(tempwan[,1:5],log10P,tempwan[,6:10])
-            }else{
-              tempwan1 <- cbind(t(as.matrix(tempwan[,1:5])),log10P,t(as.matrix(tempwan[,6:10])))
-            }
+            #if(nrow(tempwan)>1){
+            #  tempwan1 <- cbind(tempwan[,1:5],log10P,tempwan[,6:10])
+            #}else{
+            #  tempwan1 <- cbind(t(as.matrix(tempwan[,1:5])),log10P,t(as.matrix(tempwan[,6:10])))
+            #}
             
-            wan <- tempwan1
+            #wan <- tempwan1
             
-            colnames(wan)<-c("RS#","Chromosome","Marker Position (bp)","QTN effect","LOD score","-log10(P)","r2 (%)","MAF","Genotype  for code 1","Var_Error","Var_phen (total)")
+            #colnames(wan)<-c("RS#","Chromosome","Marker Position (bp)","QTN effect","LOD score","-log10(P)","r2 (%)","MAF","Genotype  for code 1","Var_Error","Var_phen (total)")
           }
         }
       }
     }
   }
   
-  if(nrow(result)>1){
-    r1<-as.matrix(result[,c(1,2,4)])
-  }else{
-    r1<-t(as.matrix(result[,c(1,2,4)]))
+  #if(nrow(result)>1){
+  #  r1<-as.matrix(result[,c(1,2,4)])
+  #}else{
+  #  r1<-t(as.matrix(result[,c(1,2,4)]))
   }
-  r2<-as.matrix(gen[,1:2])
+  #r2<-as.matrix(gen[,1:2])
   
-  rowbl<-nrow(r2)-nrow(r1)
-  bl<-matrix("",rowbl,3)
-  r12<-rbind(r1,bl)
-  result<-cbind(r2,r12)
+  #rowbl<-nrow(r2)-nrow(r1)
+  #bl<-matrix("",rowbl,3)
+  #r12<-rbind(r1,bl)
+  #result<-cbind(r2,r12)
   
-  colnames(result)<-c("Chromosome","Marker Position (bp)","Chromosome(detected)","Marker Position (bp)(detected)","LOD score(detected)")
+  #colnames(result)<-c("Chromosome","Marker Position (bp)","Chromosome(detected)","Marker Position (bp)(detected)","LOD score(detected)")
   
-  output<-list(result=wan,plot=result)
+  #3output<-list(result=wan,plot=result)
   
-  return(output)
+  #3return(output)
   
-}
+
 time2 <- proc.time()
 time_diff <- time2-time1
-
-plot(geno@map, result1, col=geno@chromosome, xlab="Map Position", ylab="QTL effect", main="ISIS EM-BLASSO GWAS of Phenotype FT_GH")
-map_info <- matrix(ncol=5)
+final_res <- data.frame(SNP_Index=numeric(), Chromosome=integer(), Genome_Position=numeric(),
+                        Chromosome_Position=numeric(), QTL=numeric(), LOD=numeric(), P_val=numeric())
 for (i in 1:dim(result)[1]){
-  j <- result[i,1]
-  map_info_temp <- as.matrix(c(j, geno@map[j], geno@chromosome[j], result[i,3]), ncol=4)
-  #map_info_temp <- cbind(map_info_temp, as.matrix(result[i,3:5]), ncol=3)
-  map_info <- rbind(map_info, map_info_temp)
-}
-dim(map_info)
+  index <- result[i,1]
+  chr <- geno@chromosome[index]
+  map_pos <- geno@map[index]
+  per_chrom_pos <- per_chrom(map_pos)
+  QTL_indiv <- result[i,3]
+  LOD_indiv <- result[i,4]
+  P_val_indiv <- result[i,5]
+  row_res <- cbind(index, chr, map_pos, per_chrom_pos, QTL_indiv,LOD_indiv,P_val_indiv)
+  final_res <- rbind(final_res, row_res)
+}  
+
+write.csv(final_res, "ISIS_res_SD.csv")
+
+plot(geno@map, result1, col=geno@chromosome, xlab="Map Position", ylab="QTL effect", main="ISIS EM-BLASSO GWAS of Phenotype SD")
