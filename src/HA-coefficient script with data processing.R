@@ -36,7 +36,7 @@ convert <- function(x) as.numeric(factor(x, levels = names(sort(-table(x)))))
 dat <- fread("Arabidopsis_geno.txt", sep=",")
 dat <- as.data.frame(lapply(dat, FUN = convert))
 res <- 0
-pheno <- fread("Arabidopsis_pheno.txt", sep=",")[["X57_FT_Field"]] #dat[,length(dat[1,])]
+pheno <- fread("Arabidopsis_pheno.txt", sep=",")[["X47_0W_GH_FT"]] #dat[,length(dat[1,])]
 for (i in 2:(length(dat[1,]))){
 su <- 0
 geno <- dat[,i]
@@ -45,7 +45,7 @@ ave_0 <- mean( pheno[geno == 1], na.rm=TRUE) #changed to 1 from 0
 ave_1 <- mean( pheno[geno == 2], na.rm=TRUE) #changed to 2 from 1
 ord <- c(ave_0, ave_1)
 ord <- rank(ord)
-ref <- c(0,1)
+ref <- c(1,2) #changed from (0,1)
 who_len <- length(geno)
 min_len <- length( which( geno == ref[ which(ord == 1) ]) )
 max_len <- length( which( geno == ref[ which(ord == 2) ]) )
@@ -79,7 +79,7 @@ ptm2 <- proc.time()
 cat(ptm2-ptm1)
 
 HA_data <- as.data.frame(cbind(snp_names, chrom, map, per_chrom_map, res))
-plot(map, res, col=chrom, xlab="Map Position", ylab="HA-coefficient", main="HA Coefficient GWAS of Phenotype FT_Field")
+plot(map, res, col=chrom, xlab="Map Position", ylab="HA-coefficient", main="HA Coefficient GWAS of Phenotype 0W_GH_FT")
 
 colnames(HA_data) <- c("ID", "Chromosome", "Map","Per_chrom Map", "Res")
 write.csv(HA_data, "HA_res_SD.csv")
